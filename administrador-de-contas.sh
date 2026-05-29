@@ -84,6 +84,36 @@ while true; do
             fi
             pausa
             ;;
+        7)
+            read -p "Digite o nome do novo grupo: " grupo
+            
+            # Verifica se o grupo já existe
+            if grep -q "^$grupo:" /etc/group; then
+                echo "Erro: O grupo '$grupo' já existe."
+            # Verifica se o nome digitado está vazio
+            elif [ -z "$grupo" ]; then
+                echo "Erro: O nome do grupo não pode ficar vazio."
+            else
+                # Tenta criar o grupo. O '2>&1' captura mensagens de erro do groupadd
+                # e permite que o if avalie se o comando deu certo ou errado.
+                erro_msg=$(groupadd "$grupo" 2>&1)
+                
+                if [ $? -eq 0 ]; then
+                    echo "Grupo '$grupo' criado com sucesso!"
+                else
+                    echo -e "\nErro ao criar o grupo: $erro_msg"
+                    echo -e "Regras importantes:\n"
+                    echo -e "  * Não pode conter apenas números"
+                    echo -e "  * Não utilize espaços"
+                    echo -e "  * Para usar mais de uma palavra, siga estes modelos:"
+                    echo -e "    [+] vivaBem"
+                    echo -e "    [+] viva_bem"
+                    echo -e "    [+] viva-bem"
+
+                fi
+            fi
+            pausa
+            ;;
         0)
             echo "Saindo do administrador. Até logo!"
             exit 0
