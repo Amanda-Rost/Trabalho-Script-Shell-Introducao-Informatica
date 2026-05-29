@@ -57,6 +57,33 @@ while true; do
             fi
             pausa
             ;;
+        2)
+            read -p "Digite o nome do usuário: " usuario
+            read -p "Digite o nome do grupo: " grupo
+            if id "$usuario" &>/dev/null && grep -q "^$grupo:" /etc/group; then
+                usermod -aG "$grupo" "$usuario"
+                echo "Usuário '$usuario' adicionado ao grupo '$grupo' com sucesso!"
+            else
+                echo "Erro: Usuário ou grupo não encontrado."
+            fi
+            pausa
+            ;;
+        5)
+            read -p "Digite o nome do usuário para EXCLUIR: " usuario
+            if id "$usuario" &>/dev/null; then
+                read -p "Deseja mesmo apagar o usuário? (s/n): " resp
+                if [ "$resp" = "s" ] || [ "$resp" = "S" ]; then
+                    userdel -r "$usuario" 2>/dev/null
+
+                    echo "Usuário '$usuario' excluido."
+                else
+                    echo "Usuário não excluido."
+                fi
+            else
+                echo "Usuário não encontrado."
+            fi
+            pausa
+            ;;
         0)
             echo "Saindo do administrador. Até logo!"
             exit 0
