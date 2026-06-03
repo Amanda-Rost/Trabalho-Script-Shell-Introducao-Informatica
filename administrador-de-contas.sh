@@ -182,6 +182,15 @@ while true; do
             fi
             pausa
             ;;
+        9)
+            read -p "Digite o nome do usuário que deseja verificar: " usuario
+            if id "$usuario" &>/dev/null; then
+                echo "O usuário '$usuario'"
+            else
+                echo "O usuário '$usuario' NÃO existe."
+            fi
+            pausa
+            ;;
         0)
             echo "Saindo do administrador. Até logo!"
             exit 0
