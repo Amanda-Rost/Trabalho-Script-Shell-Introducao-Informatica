@@ -68,6 +68,27 @@ while true; do
             fi
             pausa
             ;;
+        3)
+            read -p "Digite o nome do usuário para bloquear: " usuario
+            if id "$usuario" &>/dev/null; then
+                passwd -l "$usuario"
+                echo "Usuário '$usuario' bloqueado."
+            else
+                echo "Usuário não encontrado."
+            fi
+            pausa
+            ;;
+
+        4)
+            read -p "Digite o nome do usuário para desbloquear: " usuario
+            if id "$usuario" &>/dev/null; then
+                passwd -u "$usuario"
+                echo "Usuário '$usuario' desbloqueado."
+            else
+                echo "Usuário não encontrado."
+            fi
+            pausa
+            ;;
         5)
             read -p "Digite o nome do usuário para EXCLUIR: " usuario
             if id "$usuario" &>/dev/null; then
@@ -111,6 +132,22 @@ while true; do
                     echo -e "    [+] viva-bem"
 
                 fi
+            fi
+            pausa
+            ;;
+        8)
+            read -p "Digite o nome do grupo que deseja excluir: " grupo
+            if grep -q "^$grupo:" /etc/group; then
+                read -p "Tem certeza que deseja excluir o grupo? (s/n): " resp
+        
+                if [ "$resp" = "s" ] || [ "$resp" = "S" ]; then
+                    groupdel "$grupo"
+                    echo "Grupo '$grupo' excluído com sucesso!"
+                else
+                    echo "Operação cancelada."
+                fi
+            else
+                echo "Grupo não encontrado."
             fi
             pausa
             ;;
