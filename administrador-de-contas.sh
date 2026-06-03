@@ -71,8 +71,15 @@ while true; do
         3)
             read -p "Digite o nome do usuário para bloquear: " usuario
             if id "$usuario" &>/dev/null; then
-                passwd -l "$usuario"
-                echo "Usuário '$usuario' bloqueado."
+                # Verifica o status atual do usuário ('L' significa bloqueado)
+                status_atual=$(passwd -S "$usuario" 2>/dev/null | awk '{print $2}')
+                
+                if [ "$status_atual" = "L" ]; then
+                    echo "Aviso: O usuário '$usuario' JÁ ESTAVA bloqueado!"
+                else
+                    passwd -l "$usuario" > /dev/null
+                    echo "Usuário '$usuario' bloqueado com sucesso."
+                fi
             else
                 echo "Usuário não encontrado."
             fi
@@ -82,8 +89,15 @@ while true; do
         4)
             read -p "Digite o nome do usuário para desbloquear: " usuario
             if id "$usuario" &>/dev/null; then
-                passwd -u "$usuario"
-                echo "Usuário '$usuario' desbloqueado."
+                # Verifica o status atual do usuário ('L' significa bloqueado)
+                status_atual=$(passwd -S "$usuario" 2>/dev/null | awk '{print $2}')
+                
+                if [ "$status_atual" != "L" ]; then
+                    echo "Aviso: O usuário '$usuario' JÁ ESTAVA desbloqueado!"
+                else
+                    passwd -u "$usuario" > /dev/null
+                    echo "Usuário '$usuario' desbloqueado com sucesso."
+                fi
             else
                 echo "Usuário não encontrado."
             fi
@@ -103,6 +117,23 @@ while true; do
             else
                 echo "Usuário não encontrado."
             fi
+            pausa
+            ;;
+        6)
+            echo "--- Lista de Usuários e Status ---"
+            # Lê apenas usuários comuns e reais (UID >= 1000)
+            awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd | while read -r user; do
+                # Captura a segunda coluna do passwd -S (que será 'L' ou 'P')
+                status_raw=$(passwd -S "$user" 2>/dev/null | awk '{print $2}')
+                
+                # Correção: O Ubuntu usa "L" para Locked (Bloqueado)
+                if [ "$status_raw" = "L" ]; then
+                    status="BLOQUEADO"
+                else
+                    status="ATIVO"
+                fi
+                echo "Usuário: $user | Status: $status"
+            done
             pausa
             ;;
         7)
@@ -136,7 +167,7 @@ while true; do
             pausa
             ;;
         8)
-            read -p "Digite o nome do grupo que deseja excluir: " grupo
+            read -p "Digite o nome do grupo que deseja EXCLUIR: " grupo
             if grep -q "^$grupo:" /etc/group; then
                 read -p "Tem certeza que deseja excluir o grupo? (s/n): " resp
         
