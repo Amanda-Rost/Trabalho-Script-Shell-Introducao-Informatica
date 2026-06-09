@@ -191,6 +191,73 @@ while true; do
             fi
             pausa
             ;;
+            10)
+            VERDE="\033[0;32m"
+            RESET="\033[0m"
+            echo -e "\n------------- Gerando Relatório Detalhado -------------------"
+    
+            echo "=================================================================="
+            echo "         RELATÓRIO AUDITADO DE USUÁRIOS E GRUPOS"
+            echo "         Gerado em: $(date '+%d/%m/%Y às %H:%M:%S')"
+            echo "=================================================================="
+            echo ""
+            echo "---------------- STATUS DOS USUÁRIOS -----------------------------"
+            echo ""
+            printf "%-15s %-10s %-22s %-20s\n" "USUÁRIO" "STATUS" "ÚLTIMO ACESSO" "HOME"
+            echo "------------------------------------------------------------------"
+    
+            while IFS=: read -r user x uid gid comment home shell; do
+                if [ "$uid" -ge 1000 ] && [ "$user" != "nobody" ]; then
+                    status_raw=$(passwd -S "$user" 2>/dev/null | awk '{print $2}')
+                    if [ "$status_raw" == "L" ]; then status="BLOQUEADO"; else status="ATIVO"; fi
+
+                    linha_last=$(last "$user" | head -n 1)
+                    
+                    if [ -z "$linha_last" ]; then
+                        acesso_formatado="Nunca logou"
+                    elif echo "$linha_last" | grep -q "still logged in"; then
+                        acesso_formatado="Logado agora"
+                    else
+                        acesso_formatado=$(echo "$linha_last" | awk '{print $4, $5, $6, $7}')
+                        
+                        if [ -z "$acesso_formatado" ]; then
+                            acesso_formatado="Nunca logou"
+                        fi
+                    fi
+                    
+                    printf "%-15s %-10s %-22s %-20s\n" "$user" "$status" "$acesso_formatado" "$home"
+                fi
+            done < /etc/passwd
+
+            echo ""
+            echo "------------ GRUPOS DO SISTEMA E SEUS MEMBROS --------------------"
+            echo ""
+            printf "%-25s %-10s %-40s\n" "NOME DO GRUPO" "GID" "USUÁRIOS NO GRUPO"
+            echo "------------------------------------------------------------------"
+    
+            while IFS=: read -r gname gpasswd gid gmembers; do
+                if [ "$gid" -ge 1000 ] && [ "$gname" != "nogroup" ]; then
+                    membros="$gmembers"
+                    usuarios_primarios=$(awk -F: -v gid_busca="$gid" '$4 == gid_busca {printf "%s,", $1}' /etc/passwd)
+                    todos_membros="${usuarios_primarios}${membros}"
+                    todos_membros=$(echo "$todos_membros" | sed 's/,$//' | sed 's/^,//' | sed 's/,,/,/g')
+                    
+                    if [ "$gname" == "$todos_membros" ]; then
+                        continue
+                    fi
+
+                    if [ -z "$todos_membros" ]; then
+                        todos_membros="(Nenhum usuário)"
+                    fi
+                    
+                    printf "%-25s %-10s %-40s\n" "$gname" "$gid" "$todos_membros"
+                fi
+            done < /etc/group
+
+            echo ""
+            echo -e "${VERDE}Relatório gerado com sucesso!${RESET}"
+            pausa
+            ;;
         0)
             echo "Saindo do administrador. Até logo!"
             exit 0
