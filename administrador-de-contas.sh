@@ -191,10 +191,10 @@ while true; do
             fi
             pausa
             ;;
-            10)
+        10)
             VERDE="\033[0;32m"
             RESET="\033[0m"
-            echo -e "\n------------- Gerando Relatório Detalhado -------------------"
+            echo -e "\n------------- Gerando Relatório Detalhado ------------------------"
     
             echo "=================================================================="
             echo "         RELATÓRIO AUDITADO DE USUÁRIOS E GRUPOS"
@@ -205,7 +205,7 @@ while true; do
             echo ""
             printf "%-15s %-10s %-22s %-20s\n" "USUÁRIO" "STATUS" "ÚLTIMO ACESSO" "HOME"
             echo "------------------------------------------------------------------"
-    
+            
             while IFS=: read -r user x uid gid comment home shell; do
                 if [ "$uid" -ge 1000 ] && [ "$user" != "nobody" ]; then
                     status_raw=$(passwd -S "$user" 2>/dev/null | awk '{print $2}')
@@ -234,7 +234,10 @@ while true; do
             echo ""
             printf "%-25s %-10s %-40s\n" "NOME DO GRUPO" "GID" "USUÁRIOS NO GRUPO"
             echo "------------------------------------------------------------------"
-    
+
+            # Variável para contar quantos grupos válidos foram listados
+            contador_grupos=0
+
             while IFS=: read -r gname gpasswd gid gmembers; do
                 if [ "$gid" -ge 1000 ] && [ "$gname" != "nogroup" ]; then
                     membros="$gmembers"
@@ -251,8 +254,16 @@ while true; do
                     fi
                     
                     printf "%-25s %-10s %-40s\n" "$gname" "$gid" "$todos_membros"
+                    
+                    # Incrementa o contador toda vez que um grupo é exibido
+                    contador_grupos=$((contador_grupos + 1))
                 fi
             done < /etc/group
+
+            # Se nenhum grupo foi contabilizado no loop, exibe a mensagem personalizada
+            if [ "$contador_grupos" -eq 0 ]; then
+                echo "Nenhum grupo criado"
+            fi
 
             echo ""
             echo -e "${VERDE}Relatório gerado com sucesso!${RESET}"
